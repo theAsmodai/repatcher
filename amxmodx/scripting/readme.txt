@@ -1,0 +1,1 @@
+selftest.sma - Plugin for testing DEBUG version of repatcher.
