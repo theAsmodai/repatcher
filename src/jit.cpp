@@ -316,7 +316,12 @@ size_t CHookHandlerJit::push8(register_e reg, bool regsChanged, AMX* amx)
 {
 	if (regsChanged)
 	{
-		movzx(eax, byte_ptr[(size_t)&m_saveregs + getRegOffset(reg)]);
+		size_t offs = getRegOffset(reg);
+
+		if (offs != -1)
+			movzx(eax, byte_ptr[(size_t)&m_saveregs + offs]);
+		else
+			movzx(eax, getReg8(reg));
 
 		if (amx)
 			return amx_Push(amx, r_eax);
@@ -324,6 +329,9 @@ size_t CHookHandlerJit::push8(register_e reg, bool regsChanged, AMX* amx)
 	}
 	else
 	{
+		if (amx)
+			Sys_Error("%s: registers not marked as changed for amx hook.\n", __FUNCTION__);
+
 		push(0);
 		mov(byte_ptr[esp], getReg8(reg));
 	}
@@ -334,7 +342,12 @@ size_t CHookHandlerJit::push16(register_e reg, bool regsChanged, AMX* amx)
 {
 	if (regsChanged)
 	{
-		movzx(eax, word_ptr[(size_t)&m_saveregs + getRegOffset(reg)]);
+		size_t offs = getRegOffset(reg);
+
+		if (offs != -1)
+			movzx(eax, word_ptr[(size_t)&m_saveregs + getRegOffset(reg)]);
+		else
+			movzx(eax, getReg16(reg));
 
 		if (amx)
 			return amx_Push(amx, r_eax);
@@ -342,6 +355,9 @@ size_t CHookHandlerJit::push16(register_e reg, bool regsChanged, AMX* amx)
 	}
 	else
 	{
+		if (amx)
+			Sys_Error("%s: registers not marked as changed for amx hook.\n", __FUNCTION__);
+
 		push(0);
 		mov(word_ptr[esp], getReg16(reg));
 	}
@@ -897,7 +913,9 @@ void CHookHandlerJit::generateFooter(size_t preCount)
 		if (m_ret_st0) // some hook want return custom st0
 			fld(qword_ptr[(size_t)&m_custom_fresult]);
 
-		//mov(dword_ptr[(size_t)&g_currentHandler], 0); // for debug. TODO: remove comment
+#ifndef SELF_TEST
+		mov(dword_ptr[(size_t)&g_currentHandler], 0); // for debug
+#endif
 		ret();
 	}
 
@@ -985,7 +1003,9 @@ void CHookHandlerJit::naked_main()
 	}
 
 	push(dword_ptr[(size_t)&m_saveregs.ret]);
-	//mov(dword_ptr[(size_t)&g_currentHandler], 0); // for debug. TODO: remove comment
+#ifndef SELF_TEST
+	mov(dword_ptr[(size_t)&g_currentHandler], 0); // for debug
+#endif
 	ret();
 
 	// create SUPERCEDE way

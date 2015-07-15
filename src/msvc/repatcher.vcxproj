@@ -64,7 +64,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>psapi.lib;dbghelp.lib;libudis86/libudis86.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib;dbghelp.lib;$(SolutionDir)libudis86/libudis86.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableUAC>false</EnableUAC>
@@ -135,6 +135,7 @@
     <ClInclude Include="..\utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\amxmodx\configs\repatcher.ini" />
     <None Include="..\..\amxmodx\include\repatcher.inc" />
     <None Include="..\..\amxmodx\scripting\selftest.sma" />
   </ItemGroup>

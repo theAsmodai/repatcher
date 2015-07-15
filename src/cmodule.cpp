@@ -485,6 +485,7 @@ void CModule::deMangleSymbol(const char* symbol, char* demangled, size_t maxlen)
 	if (!CModule::isMangledSymbol(symbol))
 	{
 		strncpy(demangled, symbol, maxlen);
+		demangled[sizeof demangled - 1] = '\0';
 		return;
 	}
 
@@ -498,6 +499,7 @@ void CModule::deMangleSymbol(const char* symbol, char* demangled, size_t maxlen)
 		if (!symend)
 		{
 			strncpy(demangled, symbol, maxlen);
+			demangled[sizeof demangled - 1] = '\0';
 			return;
 		}
 
@@ -540,6 +542,7 @@ void CModule::deMangleSymbol(const char* symbol, char* demangled, size_t maxlen)
 		if (!CModule::isMangledSymbol(symbol))
 		{
 			strncpy(demangled, symbol, maxlen);
+			demangled[sizeof demangled - 1] = '\0';
 			return;
 		}
 
@@ -624,6 +627,7 @@ size_t CModule::parsePattern(const char* pattern, char* sig, bool* check, size_t
 	size_t len;
 
 	strncpy(buf, pattern, sizeof buf - 1);
+	buf[sizeof buf - 1] = '\0';
 	len = parse(buf, octets, sizeof octets - 1, ' ');
 
 	if (len > maxlen)

@@ -112,6 +112,9 @@
     <None Include="..\..\amxmodx\scripting\selftest.sma">
       <Filter>Amxmodx</Filter>
     </None>
+    <None Include="..\..\amxmodx\configs\repatcher.ini">
+      <Filter>Amxmodx</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\amxmodx\scripting\readme.txt">

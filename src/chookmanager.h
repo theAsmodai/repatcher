@@ -33,7 +33,7 @@ struct hookhandle_t
 class CHook
 {
 public:
-	CHook(void* addr, bool force);
+	CHook(void* addr, size_t fargs_size, CModule* module);
 	~CHook();
 
 	hookhandle_t* addHandler(const char* description, bool pre, AMX* amx, int forward, int flags);
@@ -93,6 +93,7 @@ public:
 
 private:
 	CHook* hookAddr(void* addr, bool force);
+	static int scanForUsercall(void* addr, CModule* module);
 
 private:
 	std::map<void *, CHook *>	m_hooks;

@@ -6,34 +6,8 @@
 CHookManager g_hookManager;
 hookhandle_t* g_currentHandler;
 
-CHook::CHook(void* addr, bool force) : m_addr(addr), m_icc_fastcall(0), m_jit(NULL), m_trampoline(NULL), m_bytes_patched(0)
+CHook::CHook(void* addr, size_t fargs_size, CModule* module) : m_addr(addr), m_icc_fastcall(fargs_size), m_jit(NULL), m_trampoline(NULL), m_bytes_patched(0), m_module(module)
 {
-	m_module = g_hldsProcess.getModule(m_addr);
-
-	if (!force)
-	{
-		dword reg_from_stack[] = {0x0424448B, 0x0824548B, 0x0C244C8B}; // SV_RecursiveHullCheck problem
-		dword* p = (dword *)addr;
-
-		for (size_t i = 0; i < 3; i++)
-			if (p[i] == reg_from_stack[i])
-				m_icc_fastcall += 4;
-
-		if (m_icc_fastcall == 0)
-		{
-			for (size_t i = 3; i > 0; i--)
-			{
-				if (!memcmp(p - i, reg_from_stack, i * 4))
-				{
-					m_icc_fastcall = i * 4;
-					break;
-				}
-			}
-		}
-		else
-			m_addr = (void *)((dword)m_addr + m_icc_fastcall);
-	}
-
 	createTrampoline();
 }
 
@@ -374,11 +348,27 @@ const char* CHook::getSymbolName(const dword addr) const
 
 CHook* CHookManager::hookAddr(void* addr, bool force)
 {
+	int diff = 0;
+	CModule* module = g_hldsProcess.getModule(addr);
+
+	if (!module)
+	{
+		setError("Bad address.");
+		return NULL;
+	}
+
+	if (!force)
+	{
+		diff = scanForUsercall(addr, module);
+		if (diff > 0)
+			addr = (void *)((int)addr + diff);
+	}
+
 	auto hook = m_hooks[addr];
 
 	if (hook == NULL)
 	{
-		hook = new CHook(addr, force);
+		hook = new CHook(addr, abs(diff), module);
 		m_hooks[addr] = hook;
 	}
 
@@ -390,6 +380,8 @@ hookhandle_t* CHookManager::createHook(void* addr, const char* description, bool
 	if (!addr)
 		return NULL;
 	CHook* hook = hookAddr(addr, (flags & hf_force_addr) != 0);
+	if (!hook)
+		return NULL;
 	return hook->addHandler(description, pre, amx, forward, flags);
 }
 
@@ -398,6 +390,8 @@ hookhandle_t* CHookManager::createHook(void* addr, const char* description, bool
 	if (!addr || !handler)
 		return NULL;
 	CHook* hook = hookAddr(addr, (flags & hf_force_addr) != 0);
+	if (!hook)
+		return NULL;
 	return hook->addHandler(description, pre, handler, flags);
 }
 
@@ -423,14 +417,15 @@ void CHookManager::removeAmxHooks()
 {
 	for (auto it = m_hooks.begin(), end = m_hooks.end(); it != end;)
 	{
-		auto hook = (*it++).second;
+		auto hook = (*it).second;
 		hook->removeAmxHandlers();
 
 		if (hook->empty())
 		{
-			m_hooks.erase(hook->getAddr());
+			m_hooks.erase(it++);
 			delete hook;
 		}
+		else it++;
 	}
 	Con_DPrintf("Active hooks after plugins unload: %i.", m_hooks.size());
 }
@@ -587,6 +582,55 @@ bool CHookManager::setArg(dword index, double value)
 	}
 
 	return true;
+}
+
+int CHookManager::scanForUsercall(void* addr, CModule* module)
+{
+	/*if (!force)
+	{
+		dword reg_from_stack[] = {0x0424448B, 0x0824548B, 0x0C244C8B}; // SV_RecursiveHullCheck problem
+		dword* p = (dword *)addr;
+
+		for (size_t i = 0; i < 3; i++)
+			if (p[i] == reg_from_stack[i])
+				m_icc_fastcall += 4;
+
+		if (m_icc_fastcall == 0)
+		{
+			for (size_t i = 3; i > 0; i--)
+			{
+				if (!memcmp(p - i, reg_from_stack, i * 4))
+				{
+					m_icc_fastcall = i * 4;
+					break;
+				}
+			}
+		}
+		else
+			m_addr = (void *)( (dword)m_addr + m_icc_fastcall );
+	}*/
+
+	dword reg_from_stack[] = {0x0424448B, 0x0824548B, 0x0C244C8B}; // SV_RecursiveHullCheck problem
+	dword* p = (dword *)addr;
+	int diff = 0;
+
+	for (size_t i = 0; i < 3; i++)
+		if (p[i] == reg_from_stack[i])
+			diff += 4;
+
+	if (diff)
+		return module->findPrefixedReference('\xE8', (void *)((int)addr + diff), true) ? diff : 0;
+
+	for (size_t i = 3; i > 0; i--)
+	{
+		if (!memcmp(p - i, reg_from_stack, i * 4))
+		{
+			diff = i * 4;
+			break;
+		}
+	}
+
+	return -diff;
 }
 
 void errorNoReturnValue(hookhandle_t* handle)

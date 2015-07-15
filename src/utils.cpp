@@ -364,7 +364,7 @@ void addType(char* name, const char* base)
 	for (auto it = g_types.begin(), end = g_types.end(); it != end; it++)
 	{
 		t = *it;
-		if (!strcmp(base, t->name) && (ptr != NULL) == t->pointer && (part != NULL) == t->ispart)
+		if (!strcmp(name, t->name) && (ptr != NULL) == t->pointer && (part != NULL) == t->ispart)
 			return; // exist
 	}
 

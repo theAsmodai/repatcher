@@ -35,6 +35,7 @@ private:
 	bool		m_valid;
 	bool		m_cdecl;
 	bool		m_retptr;
+	bool		m_thiscall;
 };
 
 bool isConvertableArg(const arg_t* arg, bool amx);

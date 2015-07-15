@@ -154,6 +154,7 @@ C_DLLEXPORT int AMXX_Query(int *interfaceVersion, amxx_module_info_s *moduleInfo
 C_DLLEXPORT int AMXX_CheckGame(const char *game)
 {
 	strncpy(g_gameName, game, sizeof g_gameName - 1);
+	g_gameName[sizeof g_gameName - 1] = '\0';
 	return AMXX_GAME_OK;
 }
 

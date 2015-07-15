@@ -7,7 +7,10 @@ static const char* remove_words[] =
 	"__cdecl",
 	"__fastcall",
 	"__usercall",
-	"__stdcall"
+	"__stdcall",
+	"__thiscall",
+	"unsigned", // TODO: remove after type system refactoring
+	"signed"
 };
 
 CFunction::CFunction(const char* description)
@@ -17,6 +20,7 @@ CFunction::CFunction(const char* description)
 
 	memset(&m_args, 0, sizeof m_args);
 	m_valid = false;
+	m_thiscall = strstr(description, "__thiscall") != NULL;
 
 	strncpy(desc, description, sizeof desc - 1);
 	desc[sizeof desc - 1] = '\0';
@@ -272,6 +276,17 @@ CFunction::CFunction(const char* description)
 			}
 			break;
 		}
+	}
+
+	if (m_thiscall)
+	{
+		if (!m_argscount)
+		{
+			setError("__thiscall function without arguments.");
+			return;
+		}
+
+		m_args[0].reg = r_ecx;
 	}
 
 	m_valid = true;
