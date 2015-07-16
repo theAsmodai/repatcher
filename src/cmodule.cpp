@@ -14,6 +14,13 @@ CModule::CModule(const char* path, modhandle_t handle, dword base, dword size) :
 	m_name = strrchr(m_path, '/') + 1;
 	m_symbols = NULL;
 #endif
+
+	m_code.start = 0;
+	m_code.end = 0;
+	m_data.start = 0;
+	m_data.end = 0;
+	m_rdata.start = 0;
+	m_rdata.end = 0;
 }
 
 CModule::~CModule()
@@ -105,14 +112,19 @@ bool CModule::parseSections()
 			m_code.start = m_baseAddress + ish->VirtualAddress;
 			m_code.end = m_code.start + ish->SizeOfRawData;
 		}
-		else if (ish->VirtualAddress == inh->OptionalHeader.BaseOfData)
+		else if (!memcmp(ish->Name, ".data", 5))
 		{
 			m_data.start = m_baseAddress + ish->VirtualAddress;
 			m_data.end = m_data.start + ish->SizeOfRawData;
+		}		
+		else if (!memcmp(ish->Name, ".rdata", 6))
+		{
+			m_rdata.start = m_baseAddress + ish->VirtualAddress;
+			m_rdata.end = m_rdata.start + ish->SizeOfRawData;
 		}
 	}
 
-	return m_code.start && m_code.end && m_data.start && m_data.end;
+	return m_code.start && m_code.end && m_data.start && m_data.end && m_rdata.start && m_rdata.end;
 }
 #else
 void CModule::loadSymbolsFromSection(section_t* sect, section_t* strings)
@@ -273,6 +285,11 @@ bool CModule::parseSections()
 			m_data.start = m_baseAddress + shdr->sh_addr;
 			m_data.end = m_data.start + shdr->sh_size;
 		}
+		else if (!strcmp(sectname, ".rodata"))
+		{
+			m_rdata.start = m_baseAddress + shdr->sh_addr;
+			m_rdata.end = m_rdata.start + shdr->sh_size;
+		}
 		else if (!strcmp(sectname, ".strtab"))
 		{
 			m_strtab.start = (dword)malloc(shdr->sh_size);
@@ -289,7 +306,7 @@ bool CModule::parseSections()
 
 	close(fd);
 	munmap(ehdr, st.st_size);
-	return m_code.start && m_code.end && m_data.start && m_data.end;
+	return m_code.start && m_code.end && m_data.start && m_data.end && m_rdata.start && m_rdata.end;
 }
 #endif
 
@@ -746,6 +763,12 @@ void* CModule::findPattern(void* from, size_t range, const char* pattern) const
 const char* CModule::findString(const char* string) const
 {
 	size_t size = strlen(string + 1);
+
+	for (dword i = m_rdata.start, end = m_rdata.end - size; i < end; i++)
+	{
+		if (!memcmp((void *)i, string, size))
+			return (const char *)i;
+	}
 
 	for (dword i = m_data.start, end = m_data.end - size; i < end; i++)
 	{

@@ -9,7 +9,7 @@ CModule* g_gamedll;
 
 bool Parse_HldsData()
 {
-	Con_Printf("[RePatcher]: Server engine is HLDS.\n");
+	Con_DPrintf("Server engine is HLDS.\n");
 
 #ifdef _WIN32
 	void* addr = g_engine->findStringReference("Client ping times:\n");

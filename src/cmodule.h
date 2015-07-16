@@ -68,6 +68,7 @@ private:
 	dword		m_delta;
 	section_t	m_code;
 	section_t	m_data;
+	section_t	m_rdata;
 #ifdef _WIN32
 	bool		m_symbols;
 #else

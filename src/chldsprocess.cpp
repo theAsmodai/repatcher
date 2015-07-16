@@ -64,7 +64,7 @@ CModule* CHldsProcess::addProcessModuleByName(const char* name)
 				{
 					auto module = new CModule(szModName, hMods[i], (dword)module_info.lpBaseOfDll, module_info.SizeOfImage);
 					if (!module->loadExtendedInfo())
-						return false;
+						return NULL;
 					m_modules.push_back(module);
 					Con_DPrintf("Added new module: %s. Modules count: %i/%i.", name, m_modules.size(), cbNeeded / sizeof(HMODULE));
 					return module;
@@ -119,7 +119,7 @@ CModule* CHldsProcess::addProcessModuleByName(const char* name)
 			sscanf(buf, "%lx-%lx", &start, &end);
 			module = new CModule(s, dlopen(s, RTLD_NOW), start, end - start);
 			if (!module->loadExtendedInfo())
-				return false;
+				return NULL;
 			m_modules.push_back(module);
 			Con_DPrintf("Added new module: %s. Modules count: %i.", name, m_modules.size());
 			break;
