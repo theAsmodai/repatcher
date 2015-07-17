@@ -89,14 +89,14 @@ native rp_find_signature(Lib:lib, const signature[]);
 * Creates hook for specified address. It will be automatically enabled on create.
 *
 * @param address        Address in memory for hook.
-* @param description    Description of arguments will be passed to hook forward.
+* @param header         Function header. Sets arguments and return value convertaion. Example: "int my::function(int this@<ecx>, char* arg2, bool arg3)".
 * @param handler        Name of public function (forward) that will be called on execute of hooked address.
-* @param pre			If true, call the forward before original function, otherwise call after.
+* @param post			If true, call the forward after original function, otherwise call before.
 * @param flags  		Flags for this hook from enum HookFlag.
 *
 * @return				Handle of hook or Invalid_Hook if failed.
 */
-native Hook:rp_add_hook(address, const description[], const handler[], bool:pre = true, HookFlag:flags = HookFlag:0);
+native Hook:rp_add_hook(address, const header[], const handler[], bool:post = false, HookFlag:flags = HookFlag:0);
 
 /**
 * Removes hook. Note: if you want temporary disable hook, use rp_set_hook_state.

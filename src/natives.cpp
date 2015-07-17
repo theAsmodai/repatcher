@@ -61,7 +61,7 @@ static cell AMX_NATIVE_CALL rp_find_signature(AMX *amx, cell *params)
 	return (cell)mod->findPattern(sig, PARAMS_COUNT == 3 && params[3]);
 }
 
-// rp_add_hook(address, const description[], const handler[], bool:pre, flags)
+// rp_add_hook(address, const description[], const handler[], bool:post, flags)
 static cell AMX_NATIVE_CALL rp_add_hook(AMX *amx, cell *params)
 {
 	enum args_e
@@ -70,7 +70,7 @@ static cell AMX_NATIVE_CALL rp_add_hook(AMX *amx, cell *params)
 		arg_address,
 		arg_description,
 		arg_handler,
-		arg_pre,
+		arg_post,
 		arg_flags
 	};
 
@@ -93,7 +93,7 @@ static cell AMX_NATIVE_CALL rp_add_hook(AMX *amx, cell *params)
 	}
 
 	int fwdid = g_amxxapi.RegisterSPForward(amx, funcid, FP_DONE);
-	return (cell)g_hookManager.createHook(addr, desc, params[arg_pre] != 0, amx, fwdid, params[arg_flags]);
+	return (cell)g_hookManager.createHook(addr, desc, params[arg_post] == 0, amx, fwdid, params[arg_flags]);
 }
 
 // rp_remove_hook(Hook:handle)
