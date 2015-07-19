@@ -202,12 +202,6 @@ static cell AMX_NATIVE_CALL rp_get_return(AMX *amx, cell *params)
 		return 0;
 	}
 
-	if (g_currentHandler->pre)
-	{
-		MF_LogError(amx, AMX_ERR_NATIVE, "Trying get original return value in pre forward.");
-		return 0;
-	}
-
 	auto func = &g_currentHandler->func;
 	dword value;
 	double fvalue;
@@ -490,10 +484,10 @@ static cell AMX_NATIVE_CALL rp_i_am_here(AMX *amx, cell *params)
 	return 1;
 }
 
-static cell AMX_NATIVE_CALL rp_convertation(AMX *amx, cell *params)
+static cell AMX_NATIVE_CALL rp_conversion(AMX *amx, cell *params)
 {
 	int len;
-	Hook_ArgConvertation(params[1], params[2], g_amxxapi.GetAmxString(amx, params[3], 0, &len), params[4], params[5], *(float *)&params[6], params[7], *(float *)&params[8]);
+	Hook_ArgConversion(params[1], params[2], g_amxxapi.GetAmxString(amx, params[3], 0, &len), params[4], params[5], *(float *)&params[6], params[7], *(float *)&params[8]);
 	return 1;
 }
 
@@ -531,7 +525,7 @@ static AMX_NATIVE_INFO RePatcherNatives[] =
 
 #ifdef SELF_TEST
 	{"rp_i_am_here",			rp_i_am_here},
-	{"rp_convertation",			rp_convertation},
+	{"rp_conversion",			rp_conversion},
 	{"rp_retcheck",				rp_retcheck},
 #endif
 

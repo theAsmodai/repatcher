@@ -237,7 +237,7 @@ char* defarg = "-2";
 
 enum test_e
 {
-	test_convertation,
+	test_conversion,
 	test_changestate,
 	test_changestate2,
 	test_supercede,
@@ -262,7 +262,7 @@ void Amx_BeginTest(int id)
 	g_amxxapi.ExecuteForward(g_fwdBeginTest, id);
 }
 
-int Hook_ArgConvertation(int a, int b, const char *str, int cl, int pl, float f, int x, float f2)
+int Hook_ArgConversion(int a, int b, const char *str, int cl, int pl, float f, int x, float f2)
 {
 	if (a != 36 || b != 321 || strcmp(str, "tratata") || cl != 2 || pl != 37 || fabs(f - 98765.4) > 0.01 || x != 12345 || fabs(f2 - 67890.1) > 0.01)
 		Sys_Error("%s: unexpected args (%i,%i,%s,%i,%i,%.2f,%i,%.2f) expected(36,321,tratata,2,37,98765.4,12345,67890.1)", __FUNCTION__, a, b, str, cl, pl, f, x, f2);
@@ -300,7 +300,7 @@ int Hook_ArgConvertation(int a, int b, const char *str, int cl, int pl, float f,
 	return g_currentHandler->pre ? pre_return : post_return;
 }
 
-void Func_ArgConvertation(edict_t* a, const char *str, void* pl, float f2)
+void Func_ArgConversion(edict_t* a, const char *str, void* pl, float f2)
 {
 	int b;
 	client_t* client;
@@ -329,7 +329,7 @@ void Func_ArgConvertation(edict_t* a, const char *str, void* pl, float f2)
 #endif
 }
 
-void Call_ArgConvertation()
+void Call_ArgConversion()
 {
 	edict_t* a = EdictOfIndex(36);
 	int b = 321;
@@ -350,28 +350,28 @@ void Call_ArgConvertation()
 		push dword ptr [string];
 		mov eax, dword ptr [b];
 		push dword ptr [a];
-		call Func_ArgConvertation;
+		call Func_ArgConversion;
 		add esp, 4 * 4;
 	}
 }
 
-void Test_ArgConvertation()
+void Test_ArgConversion()
 {
-	void* func = g_repatcher->getSymbolAddress("Func_ArgConvertation");
+	void* func = g_repatcher->getSymbolAddress("Func_ArgConversion");
 
 	if (!func)
-		Sys_Error("%s: can't find Func_ArgConvertation function\n", __FUNCTION__);
+		Sys_Error("%s: can't find Func_ArgConversion function\n", __FUNCTION__);
 
-	const char* desc = "void Func_ArgConvertation(edict_t* a, int b@<eax>, const char *str, client_t* cl@<ecx>, CBaseMonster* pl, float f@st0, int x@xmm4, float f2)";
-	g_hpre = g_hookManager.createHook(func, desc, true, (void *)Hook_ArgConvertation);
-	g_hpost = g_hookManager.createHook(func, desc, false, (void *)Hook_ArgConvertation);
+	const char* desc = "void Func_ArgConversion(edict_t* a, int b@<eax>, const char *str, client_t* cl@<ecx>, CBaseMonster* pl, float f@st0, int x@xmm4, float f2)";
+	g_hpre = g_hookManager.createHook(func, desc, true, (void *)Hook_ArgConversion);
+	g_hpost = g_hookManager.createHook(func, desc, false, (void *)Hook_ArgConversion);
 
 	if (!g_hpre || !g_hpost)
 		Sys_Error("%s: can't create hooks.\n", __FUNCTION__);
 
-	Amx_BeginTest(test_convertation);
+	Amx_BeginTest(test_conversion);
 	check_order = true;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	check_order = false;
 
 	int true_order[5] = {chook_pre, amxhook_pre, original_func, chook_post, amxhook_post};
@@ -379,7 +379,7 @@ void Test_ArgConvertation()
 		Sys_Error("%s: invalid call order [%i|%i|%i|%i|%i], expected [%i|%i|%i|%i|%i].\n", __FUNCTION__, call_order[0], call_order[1], call_order[2], call_order[3], call_order[4], true_order[0], true_order[1], true_order[2], true_order[3], true_order[4]);
 	if (g_called_func != (chook_pre|chook_post|amxhook_pre|amxhook_post|original_func))
 		Sys_Error("%s: not all functions are called %i.\n", __FUNCTION__, g_called_func);
-	Con_Printf("[RePatcher]: Test_ArgConvertation passed.\n");
+	Con_Printf("[RePatcher]: Test_ArgConversion passed.\n");
 }
 
 void Test_ChangeState()
@@ -388,14 +388,14 @@ void Test_ChangeState()
 	Amx_BeginTest(test_changestate);
 
 	g_called_func = 0;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	if (g_called_func != (chook_post|amxhook_pre|original_func))
 		Sys_Error("%s: called [%i|%i|%i|%i|%i], expected [0|1|1|1|0].\n", __FUNCTION__, g_called_func & chook_pre, ( g_called_func & amxhook_pre ) ? 1 : 0, ( g_called_func & original_func ) ? 1 : 0, ( g_called_func & chook_post ) ? 1 : 0, ( g_called_func & amxhook_post ) ? 1 : 0);
 	
 	g_hpost->enabled = false;
 	Amx_BeginTest(test_changestate2);
 	g_called_func = 0;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	if (g_called_func != (original_func|amxhook_post))
 		Sys_Error("%s: called [%i|%i|%i|%i|%i], expected [0|0|1|0|1].\n", __FUNCTION__, g_called_func & chook_pre, ( g_called_func & amxhook_pre ) ? 1 : 0, ( g_called_func & original_func ) ? 1 : 0, ( g_called_func & chook_post ) ? 1 : 0, ( g_called_func & amxhook_post ) ? 1 : 0);
 	
@@ -409,21 +409,21 @@ void Test_Supercede()
 
 	Amx_BeginTest(test_supercede);
 	g_called_func = 0;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	if (g_called_func != (chook_pre|amxhook_pre|chook_post|amxhook_post))
 		Sys_Error("%s: called [%i|%i|%i|%i|%i], expected [1|1|0|1|1].\n", __FUNCTION__, g_called_func & chook_pre, ( g_called_func & amxhook_pre ) ? 1 : 0, ( g_called_func & original_func ) ? 1 : 0, ( g_called_func & chook_post ) ? 1 : 0, ( g_called_func & amxhook_post ) ? 1 : 0);
 
 	Amx_BeginTest(test_supercede2);
 	pre_return = -1;
 	g_called_func = 0;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	if (g_called_func != (chook_pre))
 		Sys_Error("%s: called [%i|%i|%i|%i|%i], expected [1|0|0|0|0].\n", __FUNCTION__, g_called_func & chook_pre, ( g_called_func & amxhook_pre ) ? 1 : 0, ( g_called_func & original_func ) ? 1 : 0, ( g_called_func & chook_post ) ? 1 : 0, ( g_called_func & amxhook_post ) ? 1 : 0);
 
 	pre_return = 0;
 	post_return = -1;
 	g_called_func = 0;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	if (g_called_func != (chook_pre|chook_post|amxhook_pre|amxhook_post|original_func))
 		Sys_Error("%s: called [%i|%i|%i|%i|%i], expected [1|1|1|1|1].\n", __FUNCTION__, g_called_func & chook_pre, ( g_called_func & amxhook_pre ) ? 1 : 0, ( g_called_func & original_func ) ? 1 : 0, ( g_called_func & chook_post ) ? 1 : 0, ( g_called_func & amxhook_post ) ? 1 : 0);
 
@@ -435,13 +435,13 @@ void Test_Remove()
 	g_hookManager.removeHook(g_hpre);
 	Amx_BeginTest(test_remove);
 	g_called_func = 0;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	if (g_called_func != (original_func|chook_post))
 		Sys_Error("%s: called [%i|%i|%i|%i|%i], expected [0|0|1|1|0].\n", __FUNCTION__, g_called_func & chook_pre, ( g_called_func & amxhook_pre ) ? 1 : 0, ( g_called_func & original_func ) ? 1 : 0, ( g_called_func & chook_post ) ? 1 : 0, ( g_called_func & amxhook_post ) ? 1 : 0);
 
 	g_hookManager.removeHook(g_hpost);
 	g_called_func = 0;
-	Call_ArgConvertation();
+	Call_ArgConversion();
 	if (g_called_func != original_func)
 		Sys_Error("%s: called [%i|%i|%i|%i|%i], expected [0|0|1|0|0].\n", __FUNCTION__, g_called_func & chook_pre, ( g_called_func & amxhook_pre ) ? 1 : 0, ( g_called_func & original_func ) ? 1 : 0, ( g_called_func & chook_post ) ? 1 : 0, ( g_called_func & amxhook_post ) ? 1 : 0);
 
@@ -611,7 +611,7 @@ void Self_Test()
 	g_fwdChangeRetHook = g_amxxapi.RegisterSPForwardByName(g_testPlugin, "change_rethook", FP_DONE);
 	g_fwdChangeArgHook = g_amxxapi.RegisterSPForwardByName(g_testPlugin, "change_arghook", FP_DONE);
 
-	Test_ArgConvertation();
+	Test_ArgConversion();
 	Test_ChangeState();
 	Test_Supercede();
 	Test_Remove();

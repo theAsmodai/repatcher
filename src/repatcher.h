@@ -38,7 +38,7 @@ extern int ret_fact;
 extern int ret_orig_value;
 extern int ret_fact_value;
 
-int Hook_ArgConvertation(int a, int b, const char *str, int cl, int pl, float f, int x, float f2);
+int Hook_ArgConversion(int a, int b, const char *str, int cl, int pl, float f, int x, float f2);
 void Self_Test();
 #endif
 

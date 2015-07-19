@@ -117,6 +117,7 @@ hookhandle_t* CHook::addHandler(hookhandle_t* handle)
 	if (!handle->func.isValid())
 		return NULL;
 
+	handle->func.setDummyStackArgs(m_icc_fastcall / 4);
 	m_handlers.push_back(handle);
 	rebuildMainHandler();
 	repatch();
@@ -445,7 +446,20 @@ bool CHookManager::getReturn(dword* value) const
 	}
 
 	auto j = g_currentHandler->jitfunc;
-	*value = j->m_bool_replace_result ? j->m_custom_result : j->m_saveregs.result;
+
+	if (j->m_bool_replace_result)
+	{
+		*value = j->m_custom_result;
+		return true;
+	}
+
+	if (g_currentHandler->pre)
+	{
+		setError("Trying get return value of functon in pre forward when it's not yet set.");
+		return false;
+	}
+
+	*value = j->m_saveregs.result;
 	return true;
 }
 
@@ -464,7 +478,20 @@ bool CHookManager::getReturn(double* value) const
 	}
 
 	auto j = g_currentHandler->jitfunc;
-	*value = j->m_bool_replace_fresult ? j->m_custom_fresult : j->m_saveregs.fresult;
+
+	if (j->m_bool_replace_fresult)
+	{
+		*value = j->m_custom_fresult;
+		return true;
+	}
+
+	if (g_currentHandler->pre)
+	{
+		setError("Trying get return value of functon in pre forward when it's not yet set.");
+		return false;
+	}
+
+	*value = j->m_saveregs.fresult;
 	return true;
 }
 
@@ -586,30 +613,6 @@ bool CHookManager::setArg(dword index, double value)
 
 int CHookManager::scanForUsercall(void* addr, CModule* module)
 {
-	/*if (!force)
-	{
-		dword reg_from_stack[] = {0x0424448B, 0x0824548B, 0x0C244C8B}; // SV_RecursiveHullCheck problem
-		dword* p = (dword *)addr;
-
-		for (size_t i = 0; i < 3; i++)
-			if (p[i] == reg_from_stack[i])
-				m_icc_fastcall += 4;
-
-		if (m_icc_fastcall == 0)
-		{
-			for (size_t i = 3; i > 0; i--)
-			{
-				if (!memcmp(p - i, reg_from_stack, i * 4))
-				{
-					m_icc_fastcall = i * 4;
-					break;
-				}
-			}
-		}
-		else
-			m_addr = (void *)( (dword)m_addr + m_icc_fastcall );
-	}*/
-
 	dword reg_from_stack[] = {0x0424448B, 0x0824548B, 0x0C244C8B}; // SV_RecursiveHullCheck problem
 	dword* p = (dword *)addr;
 	int diff = 0;
@@ -646,7 +649,7 @@ void errorNoReturnValue(hookhandle_t* handle)
 void errorNoMemory()
 {
 	// TODO: add debug mode for output extended information
-	Sys_Error("[RePatcher]: no available memory for converting.");
+	Sys_Error("[RePatcher]: no available memory for conversion.");
 }
 
 void errorAmxStack(AMX* amx)

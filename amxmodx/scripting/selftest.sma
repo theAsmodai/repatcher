@@ -3,7 +3,7 @@
 
 enum
 {
-	test_convertation,
+	test_conversion,
 	test_changestate,
 	test_changestate2,
 	test_supercede,
@@ -15,7 +15,7 @@ enum
 }
 
 native rp_i_am_here()
-native rp_convertation(a, b, const str[], cl, pl, Float:f, x, Float:f2)
+native rp_conversion(a, b, const str[], cl, pl, Float:f, x, Float:f2)
 native rp_retcheck(a, b, c)
 
 new Lib:rp
@@ -78,21 +78,21 @@ public plugin_precache()
 public rp_begin_test(number)
 {
 	new error[256];
-	new desc[] = "void Func_ArgConvertation(edict_t* a, int b@<eax>, const char *str, client_t* cl@<ecx>, CBaseMonster* pl, float f@st0, int x@xmm4, float f2)"
+	new desc[] = "void Func_ArgConversion(edict_t* a, int b@<eax>, const char *str, client_t* cl@<ecx>, CBaseMonster* pl, float f@st0, int x@xmm4, float f2)"
 
 	switch(number)
 	{
-		case test_convertation:
+		case test_conversion:
 		{
-			new func = rp_get_symbol(rp, "Func_ArgConvertation")
+			new func = rp_get_symbol(rp, "Func_ArgConversion")
 			if (!func)
 			{
 				rp_get_error(error, sizeof error - 1)
-				server_print("Can't find Func_ArgConvertation: %s", error)
+				server_print("Can't find Func_ArgConversion: %s", error)
 				return
 			}
-			pre = rp_add_hook(func, desc, "convertation_hook", true);
-			post = rp_add_hook(func, desc, "convertation_hook_post", false);
+			pre = rp_add_hook(func, desc, "conversion_hook", false);
+			post = rp_add_hook(func, desc, "conversion_hook_post", true);
 		}
 		case test_changestate:
 		{
@@ -127,9 +127,9 @@ public rp_begin_test(number)
 				return
 			}
 
-			rethandle = rp_add_hook(retfunc, descriptions[0], "return_value_hook", true)
-			retchecker = rp_add_hook(retfunc, descriptions[0], "return_value_check", false)
-			retchecker2 = rp_add_hook(retfunc, "entvars_t* func()", "return_value_check2", false)
+			rethandle = rp_add_hook(retfunc, descriptions[0], "return_value_hook", false)
+			retchecker = rp_add_hook(retfunc, descriptions[0], "return_value_check", true)
+			retchecker2 = rp_add_hook(retfunc, "entvars_t* func()", "return_value_check2", true)
 		}
 		case test_args:
 		{
@@ -144,7 +144,7 @@ public rp_begin_test(number)
 				server_print("Can't find Func_Arg: %s", error)
 				return
 			}
-			arghandle = rp_add_hook(argfunc, descriptions2[0], "change_arg", true)
+			arghandle = rp_add_hook(argfunc, descriptions2[0], "change_arg", false)
 		}
 		case test_finish:
 		{
@@ -153,15 +153,15 @@ public rp_begin_test(number)
 	}
 }
 
-public convertation_hook(a, b, const str[], cl, pl, Float:f, x, Float:f2)
+public conversion_hook(a, b, const str[], cl, pl, Float:f, x, Float:f2)
 {
-	rp_convertation(a, b, str, cl, pl, f, x, f2)
+	rp_conversion(a, b, str, cl, pl, f, x, f2)
 	return pre_return
 }
 
-public convertation_hook_post(a, b, const str[], cl, pl, Float:f, x, Float:f2)
+public conversion_hook_post(a, b, const str[], cl, pl, Float:f, x, Float:f2)
 {
-	rp_convertation(a, b, str, cl, pl, f, x, f2)
+	rp_conversion(a, b, str, cl, pl, f, x, f2)
 	return post_return
 }
 
@@ -297,9 +297,9 @@ public return_value_check2()
 public change_rethook()
 {
 	rp_remove_hook(rethandle)
-	rethandle = rp_add_hook(retfunc, descriptions[return_id], "return_value_hook", true)
+	rethandle = rp_add_hook(retfunc, descriptions[return_id], "return_value_hook", false)
 	rp_remove_hook(retchecker)
-	retchecker = rp_add_hook(retfunc, descriptions[return_id], "return_value_check", false)
+	retchecker = rp_add_hook(retfunc, descriptions[return_id], "return_value_check", true)
 }
 
 public change_arg()
@@ -334,6 +334,6 @@ public change_arghook()
 	if(argchange_id < 5)
 	{
 		rp_remove_hook(arghandle)
-		arghandle = rp_add_hook(argfunc, descriptions2[argchange_id], "change_arg", true)
+		arghandle = rp_add_hook(argfunc, descriptions2[argchange_id], "change_arg", false)
 	}
 }

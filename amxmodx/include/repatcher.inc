@@ -89,7 +89,7 @@ native rp_find_signature(Lib:lib, const signature[]);
 * Creates hook for specified address. It will be automatically enabled on create.
 *
 * @param address        Address in memory for hook.
-* @param header         Function header. Sets arguments and return value convertaion. Example: "int my::function(int this@<ecx>, char* arg2, bool arg3)".
+* @param header         Function header. Sets arguments and return value conversion. Example: "int my::function(int this@<ecx>, char* arg2, bool arg3)".
 * @param handler        Name of public function (forward) that will be called on execute of hooked address.
 * @param post			If true, call the forward after original function, otherwise call before.
 * @param flags  		Flags for this hook from enum HookFlag.
@@ -155,7 +155,7 @@ native any:rp_get_return(any:...);
 native rp_set_return(any:...);
 
 /**
-* Set raw return value of hook, without type convertation. You can use it for return null.
+* Set raw return value of hook, without type conversion. You can use it for return null.
 *
 * @param value          Custom return value.
 *

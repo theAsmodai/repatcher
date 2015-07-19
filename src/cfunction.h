@@ -23,6 +23,7 @@ public:
 	bool isCdecl() const;
 	bool isValid() const;
 	bool argsEqual(CFunction* with);
+	void setDummyStackArgs(int count);
 
 	friend class CHook;
 	friend struct hookhandle_t;

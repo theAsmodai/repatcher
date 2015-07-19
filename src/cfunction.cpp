@@ -9,6 +9,8 @@ static const char* remove_words[] =
 	"__usercall",
 	"__stdcall",
 	"__thiscall",
+	"struct", // TODO: move to type detection
+	"class",
 	"unsigned", // TODO: remove after type system refactoring
 	"signed"
 };
@@ -355,6 +357,21 @@ bool CFunction::hasConvertableArgs(bool amx) const
 			return true;
 
 	return false;
+}
+
+void CFunction::setDummyStackArgs(int count)
+{
+	for (size_t i = 0; i < m_argscount && count; i++)
+	{
+		auto arg = &m_args[i];
+
+		if (arg->reg != r_unknown)
+			continue;
+
+		arg->type = bt_int; // no conversions
+		arg->count = 1;
+		count--;
+	}
 }
 
 bool isConvertableArg(const arg_t* arg, bool amx)
