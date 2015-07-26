@@ -641,7 +641,7 @@ void errorNoReturnValue(hookhandle_t* handle)
 	Log_Error(handle->amx, "Supercede call without setting a return value.");
 
 #ifdef SELF_TEST
-	void Test_NoReturnValue(hookhandle_t* handle);
+	void Test_NoReturnValue(hookhandle_t* h);
 	Test_NoReturnValue(handle);
 #endif
 }

@@ -1,18 +1,13 @@
 #include "precompiled.h"
 #include "cfunction.h"
 
-static const char* remove_words[] =
+static const char* g_callingConventions[] =
 {
-	"const",
 	"__cdecl",
 	"__fastcall",
 	"__usercall",
 	"__stdcall",
 	"__thiscall",
-	"struct", // TODO: move to type detection
-	"class",
-	"unsigned", // TODO: remove after type system refactoring
-	"signed"
 };
 
 CFunction::CFunction(const char* description)
@@ -27,13 +22,12 @@ CFunction::CFunction(const char* description)
 	strncpy(desc, description, sizeof desc - 1);
 	desc[sizeof desc - 1] = '\0';
 
-	// remove const, __cdecl... etc
-	for (size_t i = 0; i < ARRAYSIZE(remove_words); i++)
+	for (size_t i = 0; i < ARRAYSIZE(g_callingConventions); i++)
 	{
 		c = desc;
-		while ((c = strstr(c, remove_words[i])) != NULL)
+		while ((c = strstr(c, g_callingConventions[i])) != NULL)
 		{
-			char* from = c + strlen(remove_words[i]);
+			char* from = c + strlen(g_callingConventions[i]);
 			memmove(c, from, strlen(from) + 1);
 		}
 	}
@@ -54,28 +48,19 @@ CFunction::CFunction(const char* description)
 	}
 	*c = '\0';
 
-	char* nptr = strrchr(desc, '*');
-	char* name;
+	char* name = strrchr(desc, ' ');
 
-	if (nptr)
+	if (!name)
 	{
-		m_retptr = true;
-		*nptr = '\0';
-		name = nptr + 1;
-	}
-	else
-	{
-		m_retptr = false;
-		name = strrchr(desc, ' ');
-		if (!name)
-		{
-			setError("Function without name");
-			return;
-		}
-		*name++ = '\0';
+		setError("Function without name");
+		return;
 	}
 
-	m_rettype = getBaseForType(desc, m_retptr);
+	do name++;
+	while (*name && !isalpha(*name));
+	*name = '\0';
+
+	m_rettype = getBaseForType(desc, &m_retptr);
 
 	switch (m_rettype)
 	{
@@ -151,28 +136,21 @@ CFunction::CFunction(const char* description)
 		else
 			arg->count = 1;
 
-		char* arg_name;
-		char* ptr = strrchr(args[i], '*');
+		char* arg_name = strrchr(args[i], ' ');
 
-		if (ptr)
+		if (!arg_name)
 		{
-			*ptr = '\0';
-			arg_name = ptr + 1;
-		}
-		else
-		{
-			arg_name = strrchr(args[i], ' ');
-			if (!arg_name)
-			{
-				setError("Argument %i name missed.", i + 1);
-				return;
-			}
-			*arg_name++ = '\0';
+			setError("Argument %i name missed.", i + 1);
+			return;
 		}
 
-		arg->type = getBaseForType(args[i], ptr != NULL);
+		do arg_name++;
+		while (*arg_name && !isalpha(*arg_name));
+		*arg_name = '\0';
 
-		if (arg->type == bt_unknown)
+		arg->type = getBaseForType(args[i], &arg->ptr);
+
+		if (arg->type == bt_unknown && !arg->ptr)
 		{
 			setError("Unsupportable argument %i type name %s.", i + 1, args[i]);
 			return;

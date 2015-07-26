@@ -84,5 +84,6 @@ bool CConfig::load()
 		}
 	}
 
+	sortTypes();
 	return true;
 }

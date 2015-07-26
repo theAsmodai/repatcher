@@ -288,37 +288,107 @@ size_t getTypePushSize(basetype_e type)
 	return sizeof(int);
 }
 
-// TODO: refactor it. use struct type_t{byte base, bool ptr} instead of basetype_e
-basetype_e getBaseForType(const char* name, bool ptr)
+basetype_e makeSigned(basetype_e type)
 {
-	for (auto it = g_types.begin(), end = g_types.end(); it != end; it++)
+	switch (type)
 	{
-		type_t* t = *it;
-		const char* c;
+	case bt_word:
+		type = bt_short;
+		break;
 
-		//if (t->pointer != ptr)
-			//continue;
+	case bt_byte:
+		type = bt_char;
+		break;
 
-		if (strnicmp(name, t->name, t->len))
-			continue;
+	default: break;
+	}
+	return type;
+}
 
-		if (t->basetype == bt_char && ptr) // :(
+basetype_e makeUnsigned(basetype_e type)
+{
+	switch (type)
+	{
+	case bt_short:
+		type = bt_word;
+		break;
+
+	case bt_char:
+		type = bt_byte;
+		break;
+
+	default: break;
+	}
+	return type;
+}
+
+#define CHECK_KEYWORD(x, e) if (!strncmp(c, x, sizeof(x) - 1) && strchr(" \t*&", c[sizeof(x) - 1])) {c += sizeof(x) - 2; e; continue;}
+
+basetype_e getBaseForType(const char* name, bool* ptr)
+{
+	basetype_e type = bt_unknown;
+	size_t ptrlvl = 0;
+	bool _signed = false;
+	bool _unsigned = false;
+
+	for (const char* c = name; *c; c++)
+		if (*c == '*')
+			ptrlvl++;
+
+	for (const char* c = name; *c; c++)
+	{
+		if (*c == ' ' || *c == '\t')
 			continue;
 		
-		if (!t->ispart)
-		{
-			for (c = name + t->len; *c; c++)
-				if (isalpha(*c))
-					break;
+		CHECK_KEYWORD("const", (void *)NULL)
+		CHECK_KEYWORD("class", (void *)NULL)
+		CHECK_KEYWORD("struct", (void *)NULL)
+		CHECK_KEYWORD("signed", _signed = true)
+		CHECK_KEYWORD("unsigned", _unsigned = true)
 
-			if (*c)
+		for (auto it = g_types.begin(), end = g_types.end(); it != end; it++)
+		{
+			auto t = *it;
+
+			if (t->pointer && !ptrlvl)
 				continue;
+
+			if (strnicmp(c, t->name, t->len))
+				continue;
+
+			if (t->ispart)
+			{
+				c += t->len - 1;
+				while (isalpha(c[1])) c++;
+			}
+			else
+			{
+				if (!strchr(" \t*&", c[t->len]))
+					continue;
+
+				c += t->len - 1;
+			}
+
+			if (t->pointer)
+				ptrlvl--;
+			*ptr = ptrlvl != 0;
+			type = t->basetype;
+
+			if (_signed)
+				type = makeSigned(type);
+			if (_unsigned)
+				type = makeUnsigned(type);
+
+			return type;
 		}
 
-		return t->basetype;
+		if (ptrlvl)
+			*ptr = true;
+
+		break;
 	}
 
-	return ptr ? bt_int : bt_unknown;
+	return bt_unknown;
 }
 
 bool isTypeSigned(basetype_e type)
@@ -329,6 +399,8 @@ bool isTypeSigned(basetype_e type)
 	case bt_short:
 	case bt_char:
 		return true;
+	default:
+		;
 	}
 
 	return false;
@@ -341,7 +413,7 @@ void addType(char* name, const char* base)
 
 	if (!b)
 	{
-		Log_Error(NULL, "unknown base type '%s'\n", base);
+		Con_Printf("[RePatcher] error: unknown base type '%s' in config.\n", base);
 		return;
 	}
 
@@ -376,6 +448,11 @@ void addType(char* name, const char* base)
 	t->ispart = part != NULL;
 	t->basetype = b;
 	g_types.push_back(t);
+}
+
+void sortTypes()
+{
+	std::sort(g_types.begin(), g_types.end(), [](type_t* i, type_t* j) { return i->pointer && !j->pointer; });
 }
 
 register_e getRegByName(const char* name)

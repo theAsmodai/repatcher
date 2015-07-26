@@ -44,6 +44,8 @@ new descriptions[][] =
 	"edict_t *func()",
 	"CBaseEntity* func()",
 	"client_t* func()",
+	"unsigned char func()",
+	"signed word func()",
 	"char* func()",
 	"short* func()"
 }
@@ -208,11 +210,19 @@ public return_value_hook()
 		{
 			rp_set_return(9)
 		}
-		case 10: // string
+		case 10: // unsigned char
+		{
+			rp_set_return(0xf2)
+		}
+		case 11: // signed word
+		{
+			rp_set_return(-30000)
+		}
+		case 12: // string
 		{
 			rp_set_return("hehehe")
 		}
-		case 11: // array
+		case 13: // array
 		{
 			new value[3] = {0x12345, -2, 19}
 			rp_set_return(value, 3)
@@ -268,13 +278,21 @@ public return_value_check()
 		{
 			true_value = (value == 9)
 		}
-		case 10: // string
+		case 10: // unsigned char
+		{
+			true_value = (value == 0xf2)
+		}
+		case 11: // signed word
+		{
+			true_value = (value == -30000)
+		}
+		case 12: // string
 		{
 			new string[32]
 			rp_get_return(string, sizeof string - 1)
 			true_value = !strcmp(string, "hehehe")
 		}
-		case 11: // array
+		case 13: // array
 		{
 			new value[3] = {0x2345, -2, 19}
 			new arr[3]

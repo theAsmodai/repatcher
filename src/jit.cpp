@@ -424,13 +424,13 @@ NOINLINE size_t CHookHandlerJit::amx_PushAddr(AMX* amx, size_t addr, bool isarra
 size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t pushed_args_size, size_t& stack_offs, int flags)
 {
 	bool conv = isConvertableArg(arg, amx != NULL);
-	bool amxarray = amx && (arg->count > 1 || arg->type == bt_string);
+	bool amxarray = amx && (arg->count > 1 || arg->jitType() == bt_string);
 	auto reg = arg->reg;
 	
 	if (reg != r_unknown)
 	{
 		if (reg == r_st0)
-			return pushSt0(arg->type, regsChanged, amx);
+			return pushSt0(arg->jitType(), regsChanged, amx);
 
 		if (reg >= r_xmm0 && reg <= r_xmm7)
 			return pushXmm(reg, regsChanged, amx);
@@ -496,7 +496,7 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 	}
 	else // from stack
 	{
-		size_t push_size = getTypePushSize(arg->type);
+		size_t push_size = arg->getPushSize();
 		stack_offs -= push_size;
 		size_t offset = stack_offs + pushed_args_size;
 
@@ -532,7 +532,7 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 			else
 			{
 				if (amx)
-					return amx_PushEsp(amx, offset, getTypeSize(arg->type));
+					return amx_PushEsp(amx, offset, arg->getSize());
 
 				push(dword_ptr[esp + offset]); // TODO: smaller types?
 				return sizeof(int);
@@ -588,7 +588,7 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 		}
 
 		// optimize for vector. TODO: make autounroll for short arrays?
-		if (arg->count == 3 && getTypeSize(arg->type) == sizeof(float))
+		if (arg->count == 3 && getTypeSize(arg->jitType()) == sizeof(float))
 		{
 			mov(eax, dword_ptr[esi]);
 			mov(ecx, dword_ptr[esi + 4]);
@@ -607,10 +607,10 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 		// Loop: esi = src, edx = dst, eax = scratch, ecx = end
 		L(loop);
 		{
-			switch (getTypeSize(arg->type))
+			switch (arg->getSize())
 			{
 			case sizeof(char):
-				if (isTypeSigned(arg->type))
+				if (arg->isSigned())
 					movsx(eax, byte_ptr[esi]);
 				else
 					movzx(eax, byte_ptr[esi]);
@@ -621,7 +621,7 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 				break;
 
 			case sizeof(short):
-				if (isTypeSigned(arg->type))
+				if (arg->isSigned())
 					movsx(eax, word_ptr[esi]);
 				else
 					movzx(eax, word_ptr[esi]);
@@ -658,7 +658,7 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 	{
 		auto cReg = getReg32(reg);
 
-		if (arg->type != bt_string)
+		if (arg->jitType() != bt_string)
 		{
 			test(cReg, cReg);
 			if (!(flags & hf_dec_edict)) // will be decreased later
@@ -666,7 +666,7 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 			jz(dopush);
 		}
 
-		switch (arg->type)
+		switch (arg->jitType())
 		{
 		case bt_cbase:
 			mov(cReg, dword_ptr[cReg + g_conversiondata.pev_offset]); // cbase to entvars
@@ -748,9 +748,8 @@ size_t CHookHandlerJit::pushArg(arg_t* arg, AMX* amx, bool regsChanged, size_t p
 
 		L(dopush);
 
-		if (flags & hf_dec_edict && arg->type != bt_client)
+		if (flags & hf_dec_edict && arg->jitType() != bt_client)
 			dec(cReg);
-
 		if (amx)
 			amx_Push(amx, reg);
 		else

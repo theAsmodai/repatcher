@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-enum register_e
+enum register_e : byte
 {
 	r_unknown,
 
@@ -49,7 +49,7 @@ enum register_e
 	r_st7
 };
 
-enum basetype_e
+enum basetype_e : byte
 {
 	bt_unknown,
 	bt_int,
@@ -97,11 +97,12 @@ byte* allocExecutableMemory(size_t size);
 void* allocTempMemory(size_t size);
 
 basetype_e getBaseType(const char* name);
-basetype_e getBaseForType(const char* name, bool ptr);
+basetype_e getBaseForType(const char* name, bool* ptr);
 size_t getTypeSize(basetype_e type);
 size_t getTypePushSize(basetype_e type);
 bool isTypeSigned(basetype_e type);
 void addType(char* name, const char* base);
+void sortTypes();
 register_e getRegByName(const char* name);
 int patchMemory(void* addr, void* patch, size_t size);
 

@@ -5,7 +5,28 @@ struct arg_t
 {
 	basetype_e		type;
 	register_e		reg;
-	size_t			count;
+	bool			ptr;
+	byte			count;
+
+	basetype_e jitType() const
+	{
+		return ptr ? bt_int : type;
+	}
+
+	size_t getSize() const
+	{
+		return getTypeSize(ptr ? bt_int : type);
+	}
+
+	size_t getPushSize() const
+	{
+		return ptr ? sizeof(int *) : getTypePushSize(type);
+	}
+
+	bool isSigned() const
+	{
+		return isTypeSigned(ptr ? bt_int : type);
+	}
 };
 
 class CFunction

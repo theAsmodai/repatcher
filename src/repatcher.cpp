@@ -459,8 +459,8 @@ void Test_Return()
 {
 	Amx_BeginTest(test_return);
 
-	int true_value[10] = {(int)&g_engfuncs.pfnPEntityOfEntIndex(11)->v, 12345, -12345, 0x11, -123, 0x12, 0, (int)g_engfuncs.pfnPEntityOfEntIndex(7), (int)g_engfuncs.pfnPEntityOfEntIndex(37)->pvPrivateData, g_RehldsSvs ? (int)g_RehldsSvs->GetClient_t(9) : (int)ClientOfIndex(9)};
-	int call_value[11]; // TODO: 12. implement array check
+	int true_value[12] = {(int)&g_engfuncs.pfnPEntityOfEntIndex(11)->v, 12345, -12345, 0x11, -123, 0x12, 0, (int)g_engfuncs.pfnPEntityOfEntIndex(7), (int)g_engfuncs.pfnPEntityOfEntIndex(37)->pvPrivateData, g_RehldsSvs ? (int)g_RehldsSvs->GetClient_t(9) : (int)ClientOfIndex(9), 0xf2, -30000};
+	int call_value[13]; // TODO: 14. implement array check
 	//short arr[3] = {0x2345, -2, 19};
 
 	for (size_t i = 0; i < ARRAYSIZE(call_value); i++)
@@ -487,8 +487,8 @@ void Test_Return()
 			Sys_Error("%s: returns in %i not equal. true: %i; call: %i", __FUNCTION__, i, true_value[i], call_value[i]);
 	}
 
-	if (strcmp((char *)call_value[10], "hehehe"))
-		Sys_Error("%s: returns in 10 not equal. true: 'hehehe'; call: '%s'", __FUNCTION__, call_value[10]);
+	if (strcmp((char *)call_value[12], "hehehe"))
+		Sys_Error("%s: returns in 10 not equal. true: 'hehehe'; call: '%s'", __FUNCTION__, call_value[12]);
 
 	//if (memcmp((void *)call_value[11], arr, 6))
 		//Sys_Error("%s: returns in 11 not equal. true: '0x2345, -2, 19'; call: '%p, %i, %i'", __FUNCTION__, ((short *)call_value[11])[0], ((short *)call_value[11])[1], ((short *)call_value[11])[2]);
